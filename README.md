@@ -1,7 +1,7 @@
 # Implementation for the Batch Campaign csv challenge for the Connectly software engineering interview
 
 ## First time? To add the package to your project, run:
-`go get github.com/EmilianoAndres/go-connectly-csvcampaign`
+`go get github.com/EmilianoAndres/go-connectly-csvcampaign@v0.1.0`
 
 this package exposes 2 structs and a single function.
 

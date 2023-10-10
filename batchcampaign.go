@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -47,7 +48,7 @@ type BatchSendCampaignResponse struct {
 // Returns an object with a collection of "id" responses.
 func BatchSendCampaign(req *BatchSendCampaignRequest) *BatchSendCampaignResponse {
 
-	// Change this for the real API implementation. Usin mock server now.
+	// Change this for the real API implementation. Using mock server now.
 	connectlyUrl := "https://cde176f9-7913-4af7-b352-75e26f94fbe3.mock.pstmn.io/v1/businesses/f1980bf7-c7d6-40ec-b665-dbe13620bffa/send/whatsapp_templated_messages"
 
 	// instance an http client and context
@@ -71,21 +72,31 @@ func BatchSendCampaign(req *BatchSendCampaignRequest) *BatchSendCampaignResponse
 
 func fetchAndParseCsv(url string, client *http.Client) ([]connectlyTemplateMessageDTO, error) {
 
-	//////////
-	// Fetch csv
-	response, err := client.Get(url)
-	if err != nil {
-		return nil, err
+	var csvReader *csv.Reader
+	if strings.Contains(url, "http") {
+		// Fetch csv
+		response, err := client.Get(url)
+		if err != nil {
+			return nil, err
+		}
+
+		response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("request failed. Status: %s", response.Status)
+		}
+
+		csvReader = csv.NewReader(response.Body)
+	} else {
+		// Locally read csv
+		file, err := os.Open(url)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		csvReader = csv.NewReader(file)
 	}
-
-	response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("request failed. Status: %s", response.Status)
-	}
-
-	csvReader := csv.NewReader(response.Body)
-	//////////
 
 	columns, err := csvReader.Read()
 	if err != nil {
