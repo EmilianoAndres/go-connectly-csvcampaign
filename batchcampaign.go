@@ -42,9 +42,6 @@ type BatchSendCampaignResponse struct {
 	ApiResponses []apiResponse
 }
 
-// struct for jsons
-type JSONEntry map[string]string
-
 // This function takes an object containing a url to download a csv, and a set batch and workerpool size for GoRoutines configuration.
 // It then parses the csv for known columns and assigns values, and sends batches of api requests.
 // Returns an object with a collection of "id" responses.
