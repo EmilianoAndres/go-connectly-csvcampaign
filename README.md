@@ -6,14 +6,15 @@
 this package exposes 2 structs and a single function.
 
 ### BatchSendCampaignRequest
-`CsvUrl: the url where the package is going to download the csv from`
-`BatchSize: defines the size of the channels for the goroutines`
-`Workers: defines the size of the goroutine workerpool`
+```
+`CsvUrl`: the url where the package is going to download the csv from. You can also define the name of a local file inside the project.
+`BatchSize`: defines the size of the channels for the goroutines
+`Workers`: defines the size of the goroutine workerpool
+```
 
 
 ### BatchSendCampaignResponse
-`ApiResponse: a slice containing each individual response from the server. It contains a single id per request.`
+`ApiResponse`: a slice containing each individual response from the server. It contains a single id per request.
 
 ### BatchSendCampaign(req *BatchSendCampaignRequest) *BatchSendCampaignResponse
-
 this method contains the whole business logic
