@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -70,12 +71,18 @@ func BatchSendCampaign(req *BatchSendCampaignRequest) *BatchSendCampaignResponse
 	return &resp
 }
 
-func fetchAndParseCsv(url string, client *http.Client) ([]connectlyTemplateMessageDTO, error) {
+func fetchAndParseCsv(urlStr string, client *http.Client) ([]connectlyTemplateMessageDTO, error) {
+
+	// we use url.Parse to check if it's an http link or a path to a local file
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
+	}
 
 	var csvReader *csv.Reader
-	if strings.Contains(url, "http") {
-		// Fetch csv
-		response, err := client.Get(url)
+	if strings.HasPrefix(parsedURL.Scheme, "http") {
+		// fetch csv
+		response, err := client.Get(urlStr)
 		if err != nil {
 			return nil, err
 		}
@@ -88,8 +95,8 @@ func fetchAndParseCsv(url string, client *http.Client) ([]connectlyTemplateMessa
 
 		csvReader = csv.NewReader(response.Body)
 	} else {
-		// Locally read csv
-		file, err := os.Open(url)
+		// locally read csv
+		file, err := os.Open(parsedURL.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -225,7 +232,7 @@ func fetchCSVAndSendAPIRequests(ctx context.Context, httpClient *http.Client, wo
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			// Convert each message to JSON and send the API request
+			// marshal every struct into json and send an api request
 			for message := range messagesChan {
 				jsonData, err := json.Marshal(message)
 				if err != nil {
@@ -242,11 +249,13 @@ func fetchCSVAndSendAPIRequests(ctx context.Context, httpClient *http.Client, wo
 		}()
 	}
 
+	// waiting for all the workers to be done, then closing the response channel
 	go func() {
 		wg.Wait()
 		close(responseChan)
 	}()
 
+	// collecting every response
 	var batchResponse BatchSendCampaignResponse
 	for response := range responseChan {
 		batchResponse.ApiResponses = append(batchResponse.ApiResponses, response)
